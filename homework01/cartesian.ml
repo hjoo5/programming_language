@@ -5,4 +5,4 @@ let rec cartesian listA listB =
   | ahd::atl -> 
     match listB with 
     | [] -> []
-    | bhd::btl -> (ahd,bhd)::[] @ cartesian listA btl@cartesian atl listB
+    | bhd::btl -> (ahd,bhd)::[]@ cartesian listA btl@cartesian atl listB
