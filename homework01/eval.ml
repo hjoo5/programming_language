@@ -31,4 +31,6 @@ and eval_num : expr -> int =
   | PLUS (x1,x2) -> ((eval_num x1) + (eval_num x2))
   | MINUS (x1,x2) -> ((eval_num x1) - (eval_num x2))
 
+;;
+
 

@@ -1,2 +1,9 @@
 let rec gcd n m = 
-  if (n mod m) = 0 then m else gcd m (n mod m);;
+  if m = 0 
+    then n
+  else
+    if n < m 
+      then gcd m n
+    else
+      gcd (n-m) m
+;;
