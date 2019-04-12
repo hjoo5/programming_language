@@ -27,21 +27,3 @@ let rec sub_cal exp env =
 let calculate : exp -> float =
     fun exp  ->
         sub_cal exp []
-          
-
-            
-            
-           
-and value_change exp1 exp2 = 
-
-
-        calculate (SUB ((INT 0),(REAL 4.)));;
-
-        calculate (SIGMA(INT 1, INT 10, SUB(MUL(X, X), INT 1)))
-        let a = (3,4) let x =4 in x+3;;
-        let env = [(X,INT 0)]
-        let x = 3  match x with | 0 -> 1 | 1 ->2| |_ -> 10;;
-        let z= 4;;
-        if z = 4 then let y = 4 in z+y else 4;;
-        let env =[(X,INT 3)] in calculate (SUB(MUL(X, X), INT 1))
-        calculate (SIGMA(INT 1, INT 10, SUB (MUL (X, X), INT 1)))
