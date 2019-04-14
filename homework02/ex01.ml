@@ -37,7 +37,3 @@ let rec sub_cal exp env =
 let calculate : exp -> float =
     fun exp  ->
         sub_cal exp []
-
-
-
-        calculate (INTEGRAL(REAL 1.0, REAL 10.0, INT 3 ))
