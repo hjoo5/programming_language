@@ -11,10 +11,23 @@ let rec diff : ae * string -> ae
   = fun (ae, var) ->
     match ae with
     | CONST n -> CONST 0
-    | VAR x -> if x = var then CONST 1 else CONST 0
+    | VAR x -> if x = var 
+        then CONST 1 
+        else CONST 0
     | POWER (v, i) -> 
-        if v = var then TIMES[CONST i;POWER (v, i - 1)] else CONST 0
-   
+        if v = var 
+            then TIMES[CONST i;POWER (v, i - 1)]
+            else CONST 0
+    | TIMES l ->
+            (match l with
+            | [] ->CONST 1
+            | hd::tl ->
+                (match hd with
+                | CONST n -> TIMES [(CONST n);list_diff tl var]
+                | _ -> TIMES [diff(hd,var);list_diff tl var ]
+                )
+            )
+    
     | SUM l -> 
        ( match l with
         | [] -> SUM []
