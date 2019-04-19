@@ -20,22 +20,24 @@ let rec diff : ae * string -> ae
             else CONST 0
     | TIMES l ->
             (match l with
-            | [] ->CONST 1
-            | hd::tl ->
-                (match hd with
-                | CONST n -> TIMES [(CONST n);list_diff tl var]
-                | _ -> TIMES [diff(hd,var);list_diff tl var ]
-                )
+            | [] -> CONST 0
+            | hd::tl -> mul_diff l var
             )
     
     | SUM l -> 
        ( match l with
         | [] -> SUM []
-        | hd::tl -> SUM ([diff(hd,var)]@list_diff tl var) )
-and list_diff l var  = 
-    match l with
+        | hd::tl -> SUM ([diff(hd,var)]@sum_diff tl var) )
+and sum_diff l var  = 
+    (match l with
         | [] -> []
-        | hd::tl -> diff(hd,var)::list_diff tl var
+        | hd::tl -> diff(hd,var)::sum_diff tl var)
+and mul_diff l var =
+    match l with
+    | [] ->  CONST 0
+    | hd::tl ->  SUM ( [(TIMES ([diff(hd,var)]@tl));(TIMES ([hd]@[(mul_diff tl var)]) )])
+    ;;
+
        
   
-diff ( SUM[POWER ("x", 2);POWER ("x", 1)],"x")
+diff ( TIMES[POWER ("x", 2);POWER ("x", 1)],"x")
