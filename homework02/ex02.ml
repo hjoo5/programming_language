@@ -40,4 +40,3 @@ and mul_diff l var =
 
        
   
-diff ( TIMES[POWER ("x", 2);POWER ("x", 1)],"x")
