@@ -88,14 +88,38 @@ let rec eval : exp -> env -> mem -> value * mem
     let (val1,mem') = eval e1 env mem in 
       let (val2,mem'') = eval e2 env mem' in 
         (Int ((val2int val1)/(val2int val2)) ,mem'')
+  | ISZERO e -> 
+    let (val1,mem') = eval e env mem in 
+      if (val2int val1) = 0 
+        then (Bool true,mem')
+        else (Bool false,mem')
+  | IF(e1,e2,e3) ->
+    let (val1,mem') = eval e1 env mem in 
+    if (val2bool val1) = true 
+      then eval e2 env mem'
+      else eval e3 env mem'
+  | LET (v1,e1,e2) ->
+      let (val1,mem')  = eval e1 env mem in
+        let env' = extend_env (v1, (Int ( (List.length env) +1) ) ) env  in
+          let mem'' = extend_mem (val2int(apply_env env' v1) ,val1) mem' in
+            eval e2 env' mem''
+  | LETREC (v1,v2,e1,e2) ->
+    let env' = extend_env (v1, RecProcedure (v1,v2,e1,env)) env in 
+      let (val2,mem') = eval e2 env' mem in (val2,mem')
+  | PROC (v1,e1) ->
+    let val1 = Procedure (v1,e1,env) in (val1,mem)
+
+
+
 and val2int value  =
   match value with
     | Int n -> n
     | Loc l -> l
+and val2bool value = 
+  match value with
+    | Bool b -> b
 
 (* driver code *)
 let run : program -> value
 = fun pgm -> (fun (v,_) -> v) (eval pgm empty_env empty_mem) 
 
-
-eval (ADD((VAR "x"),CONST 4)) [("x",Loc 1)] [(1,Int 3)];;
