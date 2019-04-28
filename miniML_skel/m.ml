@@ -5,7 +5,7 @@ and exp =
   | ADD of exp * exp
   | SUB of exp * exp
   | MUL of exp * exp
-  | DIV of exp * exp
+  | DIV of exp * exp 
   | ISZERO of exp
   | READ
   | IF of exp * exp * exp
@@ -66,8 +66,36 @@ exception UndefinedSemantics
 (* TODO: Implement the eval function. Modify this function only. *)
 (*****************************************************************)
 let rec eval : exp -> env -> mem -> value * mem
-=fun exp env mem -> raise NotImplemented
+= fun exp env mem -> 
+  match exp with
+  | CONST n -> ( (Int n) ,mem)
+  | VAR x -> 
+      let l = (apply_env env x) in 
+      let v = apply_mem mem (val2int l) in (v,mem)
+  | ADD(e1,e2) ->  
+    let (val1,mem') = eval e1 env mem in 
+      let (val2,mem'') = eval e2 env mem' in 
+        ( Int ((val2int val1)+(val2int val2)) , mem'')
+  | MUL(e1,e2) ->   
+    let (val1,mem') = eval e1 env mem in 
+      let (val2,mem'') = eval e2 env mem' in 
+      ( Int ((val2int val1)*(val2int val2)) ,mem'')
+  | SUB(e1,e2) ->  
+    let (val1,mem') = eval e1 env mem in 
+      let (val2,mem'') = eval e2 env mem' in 
+        ( Int ((val2int val1)-(val2int val2)) ,mem'')
+  | DIV(e1,e2) ->  
+    let (val1,mem') = eval e1 env mem in 
+      let (val2,mem'') = eval e2 env mem' in 
+        (Int ((val2int val1)/(val2int val2)) ,mem'')
+and val2int value  =
+  match value with
+    | Int n -> n
+    | Loc l -> l
 
 (* driver code *)
 let run : program -> value
-=fun pgm -> (fun (v,_) -> v) (eval pgm empty_env empty_mem) 
+= fun pgm -> (fun (v,_) -> v) (eval pgm empty_env empty_mem) 
+
+
+eval (ADD((VAR "x"),CONST 4)) [("x",Loc 1)] [(1,Int 3)];;
