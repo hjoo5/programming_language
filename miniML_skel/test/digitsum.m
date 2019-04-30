@@ -4,4 +4,4 @@ letrec digitsum(digit) =
     let num  = digit - ((digit/10)*10) in
     num + (digitsum (digit/10))
   )
-in (digitsum read)
+in (digitsum 4)
