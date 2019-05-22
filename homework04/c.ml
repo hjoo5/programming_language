@@ -22,8 +22,8 @@ and exp =
 	| RECORD of (var * exp) list 
 	| FIELD of exp * var
 	| ASSIGNF of exp * var * exp 
-  | READ of var
-	| PRINT of exp 
+  | READ of var (* 이미 구현되어 있음 *)
+	| PRINT of exp (* 이미 구현되어 있음 *)
   | SEQ of exp * exp
   | BEGIN of exp
 and var = string
@@ -49,6 +49,16 @@ let value2str v =
 	| Procedure (params,e,env) -> "Procedure "
   | Record record -> "Record "
 	| Loc l -> "Loc "^(string_of_int l)
+
+	let value2int v =
+		match v with
+		| Int n -> n
+		| _ -> raise (Failure ("Type error"))
+	let value2bool v =
+			match v with
+			|	Bool true -> true
+			| Bool false -> false
+			| _ -> raise (Failure ("Type error"))
 
 (* environment *)
 let empty_env = []
@@ -95,7 +105,63 @@ let rec eval : program -> env -> mem -> (value * mem)
 		let v, mem' = eval e env mem in
 		let _ = print_endline (value2str v) in
 		(v, gc(env,mem')) (* Do not modify *) 
+	| SKIP -> (Unit,mem)
+	| TRUE -> ((Bool true),mem)
+	| FALSE -> ((Bool false),mem)
+	| CONST n ->  ((Int n),mem)
+	| VAR v ->  let loc = apply_env env v in 
+								let v' = apply_mem mem loc in ((v',mem)) 
+	| ADD (e1,e2) -> let (val1,mem') = eval e1 env mem in 
+										 let (val2,mem'') = eval e2 env mem' in (Int ((value2int val1)+(value2int val2)) , mem'' ) 
+										 
+  | SUB (e1,e2)-> let (val1,mem') = eval e1 env mem in 
+									let (val2,mem'') = eval e2 env mem' in (Int ((value2int val1)-(value2int val2)) , mem'' ) 
+
+  | MUL (e1,e2)-> let (val1,mem') = eval e1 env mem in 
+									let (val2,mem'') = eval e2 env mem' in (Int ((value2int val1)*(value2int val2)) , mem'' ) 
+
+  | DIV (e1,e2)-> let (val1,mem') = eval e1 env mem in 
+										let (val2,mem'') = eval e2 env mem' in (Int ((value2int val1)/(value2int val2)) , mem'' ) 
+																	
+	| LE (e1,e2) -> let (val1,mem') = eval e1 env mem in	
+										let (val2,mem'') = eval e2 env mem' in 
+											let sub = (value2int val1) - (value2int val2) in
+												if (sub <= 0) then (Bool true,mem'') else   (Bool false,mem'')
+
+	| EQ (e1,e2) ->  let (val1,mem') = eval e1 env mem in	
+										let (val2,mem'') = eval e2 env mem' in 
+											(match (val1,val2) with
+											| (Int n1 , Int n2) -> if n1=n2 then (Bool true,mem'') else   (Bool false,mem'')
+											|	(Bool b1,Bool b2) ->  if b1=b2 then (Bool true,mem'') else   (Bool false,mem'')
+											| _ -> (Bool false,mem'')
+											)
+	| NOT e1 -> let (val1,mem') = eval e1 env mem in (Bool (not (value2bool val1)),mem' )
+
+	| IF (e1,e2,e3) ->  let (val1,mem') = eval e1 env mem in	
+											if (value2bool val1) then eval e2 env mem' else  eval e3 env mem'
+	
+	| WHILE (e1,e2) ->  let (val1,mem') = eval e1 env mem in	
+												if (value2bool val1)  
+													then  
+														let (val2,mem') = eval e2 env mem' in eval (WHILE (e1,e2)) env mem'
+													else
+														(Unit ,mem')
+
+
+	| LET (variable,e1,e2) ->  let (val1,mem') = eval e1 env mem in	
+															let newLocation = new_location () in
+																let  mem'' = extend_mem (newLocation,val1) mem' in
+																	let env' = extend_env (variable,newLocation) env in eval e2 env' mem'' 
+	
+	| PROC (varList,e1) -> (Procedure (varList,e1,env),mem)
+	| CALLV  (e1,varList) -> 
+		(match varList with
+		| hd::tl ->
+	| CALLR of exp * var list
+	| ASSIGN of var * exp 
+  
 	| _ -> raise NotImplemented (* TODO *)
+	 
 
 
 let run : program -> bool -> bool -> unit 
