@@ -19,9 +19,11 @@ and exp =
 	| CALLV of exp * exp list 
 	| CALLR of exp * var list
 	| ASSIGN of var * exp 
+				(* to do*)
 	| RECORD of (var * exp) list 
 	| FIELD of exp * var
 	| ASSIGNF of exp * var * exp 
+		(* ----------------*)
   | READ of var (* 이미 구현되어 있음 *)
 	| PRINT of exp (* 이미 구현되어 있음 *)
   | SEQ of exp * exp
@@ -53,6 +55,7 @@ let value2str v =
 	let value2int v =
 		match v with
 		| Int n -> n
+		| Loc n -> n
 		| _ -> raise (Failure ("Type error"))
 	let value2bool v =
 			match v with
@@ -154,14 +157,50 @@ let rec eval : program -> env -> mem -> (value * mem)
 																	let env' = extend_env (variable,newLocation) env in eval e2 env' mem'' 
 	
 	| PROC (varList,e1) -> (Procedure (varList,e1,env),mem)
-	| CALLV  (e1,varList) -> 
-		(match varList with
-		| hd::tl ->
-	| CALLR of exp * var list
-	| ASSIGN of var * exp 
-  
+
+	| CALLV  (e1,valListForFuntionCall) ->  
+		let ( (Procedure (varListInFuntion,expr,envForFuntionCall)) ,mem') = eval e1 env mem in
+		let (envforFun,envFormem) = callByValue varListInFuntion valListForFuntionCall env envForFuntionCall mem' in eval expr envforFun envFormem
+	
+	| CALLR (e1,varList) ->	
+			let ( (Procedure (varListInFuntion,expr,envForFuntionCall)) ,mem') = eval e1 env mem in
+			let (envforFun,envFormem) = callByRef varListInFuntion varList env mem' in eval expr envforFun envFormem
+
+	| ASSIGN (variable,expr) ->
+			let (value1,mem') = eval expr env mem in
+				let envLoc = apply_env env variable in
+					let mem'' = extend_mem (envLoc,value1) mem' in (value1,mem'')
+
+
+	| SEQ (e1,e2) ->
+		let (v1,mem') = eval e1 env mem in let (v2,mem'') = eval e2 env mem' in (v2,mem'')
+			
+	| BEGIN e1 ->
+		let (v1,mem') = eval e1 env mem in (v1,mem')
+				
 	| _ -> raise NotImplemented (* TODO *)
-	 
+
+	
+and callByValue varList valList rootenv targetenv mem =
+	match (varList,valList) with 
+	| ([],[]) ->  (targetenv,mem)
+	| (hd1::tl1,hd2::tl2) -> 
+			let newLoc = new_location () in
+			let (valForvar,mem') = eval hd2 rootenv mem in
+			let envForFuntionCall = extend_env (hd1,newLoc) targetenv in  
+			let mem'' = extend_mem (newLoc,valForvar) mem' in callByValue tl1 tl2 rootenv envForFuntionCall mem''
+	| ([],_) -> raise UndefinedSemantics
+	| (_,[]) -> raise UndefinedSemantics
+
+	and callByRef varList valList env mem =
+	match (varList,valList) with 
+	| ([],[]) ->  (env,mem)
+	| (hd1::tl1,hd2::tl2) -> 
+			let (loc,mem') =  (eval (VAR hd2) env mem) in
+			let envForFuntionCall = extend_env (hd1,(value2int loc)) env in callByRef tl1 tl2 envForFuntionCall mem'
+	| ([],_) -> raise UndefinedSemantics
+	| (_,[]) -> raise UndefinedSemantics
+			
 
 
 let run : program -> bool -> bool -> unit 
