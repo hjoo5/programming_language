@@ -65,7 +65,7 @@ $ ./run test/test12.c
 $ ./run test/test13.c
 25
 
-$ ./run test/test15.c //오류 callbyref 에서 현재 값을 제대로 수정을 못 하고 있움(메모리를 바꾸어야 하나 환경을 바꾸고 있음)
+$ ./run test/test15.c 
 5
 
 $ ./run test/test16.c

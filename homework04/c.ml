@@ -168,8 +168,8 @@ let rec eval : program -> env -> mem -> (value * mem)
 		let (envforFun,envFormem) = callByValue varListInFuntion valListForFuntionCall env envForFuntionCall mem' in eval expr envforFun envFormem
 	
 	| CALLR (e1,varList) ->	
-			let ( (Procedure (varListInFuntion,expr,envForFuntionCall)) ,mem') = eval e1 env mem in
-			let (envforFun,envFormem) = callByRef varListInFuntion varList env mem' in eval expr envforFun envFormem
+			let ( (Procedure (varListInFuntion,expr,envForFunctionCall)) ,mem') = eval e1 env mem in
+			let (envforFun,envFormem) = callByRef varListInFuntion varList env envForFunctionCall mem' in eval expr envforFun envFormem
 
 	| ASSIGN (variable,expr) ->
 			let (value1,mem') = eval expr env mem in
@@ -211,12 +211,12 @@ and callByValue varList valList rootenv targetenv mem =
 	| ([],_) -> raise UndefinedSemantics
 	| (_,[]) -> raise UndefinedSemantics
 
-	and callByRef varList valList env mem =
+	and callByRef varList valList rootenv targetenv mem =
 	match (varList,valList) with 
-	| ([],[]) ->  (env,mem)
+	| ([],[]) ->  (targetenv,mem)
 	| (hd1::tl1,hd2::tl2) -> 
-			let (loc,mem') =  (eval (VAR hd2) env mem) in
-			let envForFuntionCall = extend_env (hd1,(value2int loc)) env in callByRef tl1 tl2 envForFuntionCall mem'
+			let loc = apply_env rootenv hd2 in
+			let envForFuntionCall = extend_env (hd1,loc) targetenv in callByRef tl1 tl2 rootenv envForFuntionCall mem
 	| ([],_) -> raise UndefinedSemantics
 	| (_,[]) -> raise UndefinedSemantics
 	
