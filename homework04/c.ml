@@ -19,9 +19,9 @@ and exp =
 	| CALLV of exp * exp list 
 	| CALLR of exp * var list
 	| ASSIGN of var * exp 
-				(* to do*)
 	| RECORD of (var * exp) list 
 	| FIELD of exp * var
+		(* to do*)
 	| ASSIGNF of exp * var * exp 
 		(* ----------------*)
   | READ of var (* 이미 구현되어 있음 *)
@@ -62,6 +62,10 @@ let value2str v =
 			|	Bool true -> true
 			| Bool false -> false
 			| _ -> raise (Failure ("Type error"))
+
+	let record2evn r =
+		match r with
+		| Record l -> l
 
 (* environment *)
 let empty_env = []
@@ -136,6 +140,7 @@ let rec eval : program -> env -> mem -> (value * mem)
 											(match (val1,val2) with
 											| (Int n1 , Int n2) -> if n1=n2 then (Bool true,mem'') else   (Bool false,mem'')
 											|	(Bool b1,Bool b2) ->  if b1=b2 then (Bool true,mem'') else   (Bool false,mem'')
+											|	(Unit,Unit) -> (Bool true,mem'') 
 											| _ -> (Bool false,mem'')
 											)
 	| NOT e1 -> let (val1,mem') = eval e1 env mem in (Bool (not (value2bool val1)),mem' )
@@ -171,6 +176,20 @@ let rec eval : program -> env -> mem -> (value * mem)
 				let envLoc = apply_env env variable in
 					let mem'' = extend_mem (envLoc,value1) mem' in (value1,mem'')
 
+	| RECORD li -> 
+		(match li with
+		| [] -> (Unit,mem)
+		| hd::tl -> (recordSeting li env mem [] ) ) 
+
+	| FIELD (e1,variable) ->
+			let (val1,mem') = eval e1 env mem in
+				let value = apply_mem mem' (apply_env (record2evn val1) variable) in (value,mem)
+	
+	| ASSIGNF (e1,variable,e2)  ->
+		let (val1,mem') = eval e1 env mem in
+			let (val2,mem'') = eval e2 env mem' in 
+				let new_mem = extend_mem ((apply_env (record2evn val1) variable), val2) mem'' in (val2,new_mem)
+
 
 	| SEQ (e1,e2) ->
 		let (v1,mem') = eval e1 env mem in let (v2,mem'') = eval e2 env mem' in (v2,mem'')
@@ -178,7 +197,7 @@ let rec eval : program -> env -> mem -> (value * mem)
 	| BEGIN e1 ->
 		let (v1,mem') = eval e1 env mem in (v1,mem')
 				
-	| _ -> raise NotImplemented (* TODO *)
+
 
 	
 and callByValue varList valList rootenv targetenv mem =
@@ -200,6 +219,16 @@ and callByValue varList valList rootenv targetenv mem =
 			let envForFuntionCall = extend_env (hd1,(value2int loc)) env in callByRef tl1 tl2 envForFuntionCall mem'
 	| ([],_) -> raise UndefinedSemantics
 	| (_,[]) -> raise UndefinedSemantics
+	
+	
+	and recordSeting recordList recordenv recordmem recordValue  =
+		match recordList with
+		| [] -> (Record recordValue,recordmem)
+		| (variable,expr)::tl ->
+			let (value1,mem) = eval expr recordenv recordmem in
+				let newloc = new_location () in
+					let mem' =extend_mem (newloc,value1) mem in
+							let   recordValue' = (variable,newloc):: recordValue in recordSeting tl recordenv mem' recordValue'
 			
 
 
