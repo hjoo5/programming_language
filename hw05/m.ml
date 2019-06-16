@@ -109,44 +109,6 @@ let rec gen_equations : TEnv.t -> exp -> typ -> typ_eqn
     let new_tyvar = fresh_tyvar () in
       (gen_equations tenv e1 (TyFun (new_tyvar, ty))) @ (gen_equations tenv e2 new_tyvar)
 
-let rec apply_type_env alpha type_env =
-  match type_env with
-  | [] -> false
-  | (x, v)::tl -> if alpha = x || alpha = v then true else apply_type_env alpha tl
-
-let rec check alpha typet type_env =
-  match typet with
-  | [] -> apply_type_env alpha type_env
-  | (x, v)::tl -> let type_env' = [(x,v)] @ type_env in check alpha tl type_env'
-
-
-(* let rec check from need = 
-  let re = Str.regexp_string need in
-    try ignore (Str.search_forward re from 0); true
-    with Not_found -> false *)
-
-let rec unify t1 t2 subst =
-  match (t1, t2) with
-  | (TyInt, TyInt) -> subst
-  | (TyBool, TyBool) -> subst
-  | (TyVar a, TyVar b) -> subst
-  | (TyVar a, _) ->
-    if (check a t2)
-      then raise TypeError
-      else (Subst.extend a t2 subst)   
-  | (_, TyVar b) -> unify t2 t1 subst
-  | (TyFun (tv1, tv2), TyFun (tv1', tv2')) ->
-    let subst' = unify tv1 tv1' subst in
-    let subst'' = unify (Subst.apply tv2 subst') (Subst.apply tv2' subst') subst' in
-      subst''
-  | (_, _) -> raise TypeError
-
-let rec unifyall ty_eqn up_subst =
-  match ty_eqn with
-  | [] -> up_subst
-  | (h1, h2) :: tl ->
-    let up_subst' = unify (Subst.apply h1 up_subst) (Subst.apply h2 up_subst) up_subst in
-      unifyall tl up_subst'
 
 let solve : typ_eqn -> Subst.t
 =fun eqns -> unifyall eqns [] 
